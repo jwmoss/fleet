@@ -45,8 +45,10 @@
 				<dict>
 					<key>aboutUpdateURL</key>
 					<string>https://support.apple.com/en-us/120283</string>
+					<key>requiredInstallationDate</key>
+					<string>2025-10-05T00:00:00</string>
 					<key>requiredMinimumOSVersion</key>
-					<string>latest-minor</string>
+					<string>15.7</string>
 					<key>targetedOSVersionsRule</key>
 					<string>15</string>
 				</dict>
