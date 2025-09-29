@@ -11,13 +11,21 @@ var Funcs = map[string][]func(*maintained_apps.FMAManifestApp) (*maintained_apps
 	"microsoft-excel/darwin":        {MicrosoftVersionFromReleaseNotes},
 	"brave-browser/darwin":          {BraveVersionTransformer},
 	"whatsapp/darwin":               {WhatsAppVersionShortener},
-	"google-chrome/darwin":          {ChromePKGInstaller},
 	"omnissa-horizon-client/darwin": {OmnissaHorizonVersionShortener},
+	"google-chrome/darwin":          {ChromePKGInstaller},
+	"logi-options+/darwin":          {LogiOptionsZIPInstaller},
 }
 
 func ChromePKGInstaller(app *maintained_apps.FMAManifestApp) (*maintained_apps.FMAManifestApp, error) {
 	app.Version = "latest"
 	app.InstallerURL = "https://dl.google.com/dl/chrome/mac/universal/stable/gcem/GoogleChrome.pkg"
+
+	return app, nil
+}
+
+func LogiOptionsZIPInstaller(app *maintained_apps.FMAManifestApp) (*maintained_apps.FMAManifestApp, error) {
+	app.Version = "latest"
+	app.InstallerURL = "https://download01.logi.com/web/ftp/pub/techsupport/optionsplus/logioptionsplus_installer.zip"
 
 	return app, nil
 }
