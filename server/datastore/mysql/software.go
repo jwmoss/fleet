@@ -351,6 +351,7 @@ SELECT
     s.vendor,
     s.arch,
     s.extension_id,
+		s.upgrade_code,
     hs.last_opened_at
 FROM
     software s
@@ -392,9 +393,9 @@ func (ds *Datastore) applyChangesForNewSoftwareDB(
 	// We want to make sure we have valid data before proceeding. We've seen Windows programs with empty names.
 	software = filterSoftwareWithEmptyNames(software)
 
-	// This code executes once an hour for each host, so we should optimize for MySQL master (writer) DB performance.
-	// We use a slave (reader) DB to avoid accessing the master. If nothing has changed, we avoid all access to the master.
-	// It is possible that the software list is out of sync between the slave and the master. This is unlikely because
+	// This code executes once an hour for each host, so we should optimize for MySQL writer DB performance.
+	// We use a reader DB to avoid accessing the writer. If nothing has changed, we avoid all access to the writer.
+	// It is possible that the software list is out of sync between the reader and the writer. This is unlikely because
 	// it is updated once an hour under normal circumstances. If this does occur, the software list will be updated
 	// once again in an hour.
 	currentSoftware, err := listSoftwareByHostIDShort(ctx, ds.reader(ctx), hostID)
@@ -558,8 +559,8 @@ func (ds *Datastore) getExistingSoftware(
 		for checksum := range incomingChecksumToSoftware {
 			keys = append(keys, checksum)
 		}
-		// We use the replica DB for retrieval to minimize the traffic to the master DB.
-		// It is OK if the software is not found in the replica DB, because we will then attempt to insert it in the master DB.
+		// We use the replica DB for retrieval to minimize the traffic to the writer DB.
+		// It is OK if the software is not found in the replica DB, because we will then attempt to insert it in the writer DB.
 		currentSoftware, err = getSoftwareIDsByChecksums(ctx, ds.reader(ctx), keys)
 		if err != nil {
 			return nil, nil, nil, err

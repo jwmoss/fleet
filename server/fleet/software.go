@@ -29,6 +29,7 @@ const (
 	SoftwareReleaseMaxLength = 64
 	SoftwareVendorMaxLength  = 114
 	SoftwareArchMaxLength    = 16
+	UpgradeCodeMaxLength     = 16 // a GUID: 128-bits -> 16 bytes, max no. Runes
 
 	// SoftwareTeamIdentifierMaxLength is the max length for Apple's Team ID,
 	// see https://developer.apple.com/help/account/manage-your-team/locate-your-team-id
@@ -100,6 +101,8 @@ type Software struct {
 	IsKernel bool `json:"-"`
 	// ApplicationID is the unique identifier for Android software. Equivalent to the BundleIdentifier on Apple software.
 	ApplicationID *string `json:"application_id,omitempty" db:"application_id"`
+
+	UpgradeCode string `json:"upgrade_code,omitempty" db:"upgrade_code"`
 }
 
 func (Software) AuthzType() string {
@@ -141,6 +144,11 @@ func (s Software) ToUniqueStr() string {
 	}
 	if s.ApplicationID != nil && *s.ApplicationID != "" {
 		ss = append(ss, *s.ApplicationID)
+	}
+	// UpgradeCode added in a migration, include only if it exists // TODO - understanding this
+	// reasoning better
+	if s.UpgradeCode != "" {
+		ss = append(ss, s.UpgradeCode)
 	}
 	return strings.Join(ss, SoftwareFieldSeparator)
 }
@@ -512,7 +520,7 @@ func ParseSoftwareLastOpenedAtRowValue(value string) (time.Time, error) {
 // The vendor field is currently trimmed by removing the extra characters and adding `...` at the end.
 func SoftwareFromOsqueryRow(
 	name, version, source, vendor, installedPath, release, arch,
-	bundleIdentifier, extensionId, extensionFor, lastOpenedAt string,
+	bundleIdentifier, extensionId, extensionFor, lastOpenedAt, upgradeCode string,
 ) (*Software, error) {
 	if name == "" {
 		return nil, errors.New("host reported software with empty name")
@@ -545,9 +553,10 @@ func SoftwareFromOsqueryRow(
 		ExtensionID:      truncateString(extensionId, SoftwareExtensionIDMaxLength),
 		ExtensionFor:     truncateString(extensionFor, SoftwareExtensionForMaxLength),
 
-		Release: truncateString(release, SoftwareReleaseMaxLength),
-		Vendor:  vendor,
-		Arch:    truncateString(arch, SoftwareArchMaxLength),
+		Release:     truncateString(release, SoftwareReleaseMaxLength),
+		Vendor:      vendor,
+		Arch:        truncateString(arch, SoftwareArchMaxLength),
+		UpgradeCode: truncateString(upgradeCode, UpgradeCodeMaxLength), // TODO - truncation necessary? should always be exactly 16bytes or empty
 	}
 	if !lastOpenedAtTime.IsZero() {
 		software.LastOpenedAt = &lastOpenedAtTime
